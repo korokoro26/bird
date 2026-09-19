@@ -130,7 +130,7 @@
         </div>
       </section>
 
-      <!-- 【アップデート】ゲーミフィケーション：遭遇図鑑ランキング / 熟練度バッジ -->
+      <!-- ゲーミフィケーション：遭遇図鑑ランキング / 熟練度バッジ -->
       <section v-if="birdPokedex.length > 0" class="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
@@ -145,7 +145,17 @@
             :key="bird.name"
             class="flex-shrink-0 bg-gray-50 hover:bg-emerald-50/50 transition border border-gray-100 rounded-xl px-3 py-2 flex items-center space-x-2.5"
           >
-            <span class="text-lg">{{ bird.rank.badge }}</span>
+            <!-- 図鑑サムネイル写真 (iNaturalist API連携) -->
+            <div class="w-9 h-9 rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+              <img 
+                v-if="birdPhotoMap[bird.name]" 
+                :src="birdPhotoMap[bird.name]" 
+                :alt="bird.name"
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <span v-else class="text-base">{{ bird.rank.badge }}</span>
+            </div>
             <div>
               <div class="text-xs font-bold text-gray-800 flex items-center space-x-1">
                 <span>{{ bird.name }}</span>
@@ -201,18 +211,18 @@
           <article 
             v-for="item in filteredRecords" 
             :key="item.id"
-            class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition duration-200 flex flex-col justify-between"
+            class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition duration-200 flex flex-col justify-between overflow-hidden"
           >
             <div>
               <div class="flex items-start justify-between">
-                <div>
-                  <div class="flex items-center space-x-2">
+                <!-- 鳥名および関連情報 -->
+                <div class="flex-1 pr-2">
+                  <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                     <h3 class="text-lg font-bold text-gray-900 tracking-tight">{{ item.birdName }}</h3>
                     <span v-if="item.isLifer" class="bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center space-x-0.5">
                       <i data-lucide="sparkles" class="w-3 h-3"></i>
                       <span>Lifer!</span>
                     </span>
-                    <!-- 【アップデート】この鳥との通算遭遇カウントバッジ -->
                     <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1" :title="'この鳥との累計遭遇回数: ' + getBirdEncounterCount(item.birdName) + '回'">
                       <i data-lucide="eye" class="w-3 h-3"></i>
                       <span>{{ getBirdEncounterCount(item.birdName) }}回目</span>
@@ -231,7 +241,7 @@
                 </div>
 
                 <!-- 操作ボタングループ (Update / Delete) -->
-                <div class="flex items-center space-x-1">
+                <div class="flex items-center space-x-1 flex-shrink-0">
                   <button 
                     @click="editRecord(item)" 
                     title="編集"
@@ -249,7 +259,29 @@
                 </div>
               </div>
 
-              <!-- 【アップデート】探鳥地：Google Maps 連携リンク -->
+              <!-- 【新機能】iNaturalist API連携による鳥の写真プレビューエリア (UX向上: スケルトン表示) -->
+              <div class="mt-3 relative rounded-xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
+                <!-- 読み込み完了時の画像表示 -->
+                <img 
+                  v-if="birdPhotoMap[item.birdName]" 
+                  :src="birdPhotoMap[item.birdName]" 
+                  :alt="item.birdName"
+                  class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                  loading="lazy"
+                />
+                <!-- API取得中 (スケルトンアニメーションで体感待ち時間を低減) -->
+                <div v-else-if="photoLoadingMap[item.birdName]" class="w-full h-full flex flex-col items-center justify-center text-gray-400 animate-pulse bg-gray-200">
+                  <i data-lucide="image" class="w-8 h-8 opacity-40 mb-1"></i>
+                  <span class="text-[11px]">写真を取得中...</span>
+                </div>
+                <!-- 写真が見つからなかった場合のフォールバック -->
+                <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 border border-gray-100">
+                  <i data-lucide="feather" class="w-8 h-8 opacity-30 mb-1"></i>
+                  <span class="text-[11px] text-gray-400">画像なし</span>
+                </div>
+              </div>
+
+              <!-- 探鳥地：Google Maps 連携リンク -->
               <div class="mt-3 flex items-center space-x-2">
                 <a 
                   :href="getGoogleMapsUrl(item.location)" 
@@ -278,9 +310,9 @@
       </section>
     </main>
 
-    <!-- バージョン表示 (更新: v1.0.2) -->
+    <!-- バージョン表示 (更新: v1.0.3) -->
     <footer class="text-center py-4 text-[10px] text-gray-400 select-none">
-      ToriLog v1.0.2
+      ToriLog v1.0.3
     </footer>
 
     <!-- 観察登録/編集モーダル -->
@@ -432,7 +464,7 @@
 
   <script>
     // ==========================================
-    // 1. IndexedDB 永続化レイヤー (既存データを絶対維持)
+    // 1. IndexedDB 永続化レイヤー (既存データ構造は完全維持)
     // ==========================================
     const DB_NAME = 'ToriLog_BirdDatabase';
     const DB_VERSION = 1;
@@ -504,7 +536,7 @@
     // ==========================================
     // 2. Vue.js 3 アプリケーション本体
     // ==========================================
-    const { createApp, ref, computed, onMounted, nextTick } = Vue;
+    const { createApp, ref, computed, onMounted, nextTick, reactive } = Vue;
 
     createApp({
       setup() {
@@ -515,6 +547,11 @@
         const isModalOpen = ref(false);
         const isEditing = ref(false);
         const modalContent = ref(null);
+
+        // 【新機能用ステート】鳥画像キャッシュと読み込み状態
+        // 初学者向けメモ: リアクティブオブジェクトに保存することで重複フェッチを防ぎ高速化
+        const birdPhotoMap = reactive({});
+        const photoLoadingMap = reactive({});
 
         // 入力フォームデータ構造
         const form = ref({
@@ -536,11 +573,74 @@
           });
         };
 
+        // ==========================================
+        // 【新機能】iNaturalist API連携 (鳥の写真を取得)
+        // エンドポイント: GET https://api.inaturalist.org/v1/observations?iconic_taxa=Aves&photos=true&per_page=10
+        // ==========================================
+        const fetchBirdPhoto = async (birdName) => {
+          const name = (birdName || '').trim();
+          if (!name) return;
+
+          // 既に取得済み、または取得処理中の場合はスキップ（キャッシュ活用で体感レイテンシ削減）
+          if (birdPhotoMap[name] !== undefined || photoLoadingMap[name]) return;
+
+          photoLoadingMap[name] = true;
+
+          try {
+            // 指定されたベースURLに検索クエリ `&q=` を追加して該当鳥類の観測データを検索
+            const baseUrl = "https://api.inaturalist.org/v1/observations?iconic_taxa=Aves&photos=true&per_page=10";
+            const url = `${baseUrl}&q=${encodeURIComponent(name)}`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`HTTPエラー ステータス: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // レスポンスから最初の観測写真のURLを安全に抽出
+            if (data && data.results && data.results.length > 0) {
+              let photoUrl = null;
+              for (const obs of data.results) {
+                // observation_photos または photos から画像URLを取得
+                if (obs.photos && obs.photos.length > 0) {
+                  // medium サイズのURLを取得（存在しない場合はurlフィールドを流用）
+                  photoUrl = obs.photos[0].url.replace('square', 'medium');
+                  break;
+                }
+              }
+              birdPhotoMap[name] = photoUrl; // null の場合もあり得る
+            } else {
+              birdPhotoMap[name] = null; // 該当なしとしてマーク
+            }
+          } catch (err) {
+            console.error("iNaturalist API連携エラー:", err);
+            // 通信障害時でもアプリがクラッシュしないようnullを代入
+            birdPhotoMap[name] = null;
+            // ユーザーに通信エラーを明確に伝えるアラート（要件準拠）
+            alert(`【画像取得エラー】「${name}」の写真取得中に通信エラーが発生しました。\nネットワーク接続を確認してください。\n詳細: ${err.message || err}`);
+          } finally {
+            photoLoadingMap[name] = false;
+            refreshIcons();
+          }
+        };
+
+        // 一覧に存在するすべての鳥の写真をバックグラウンドで一括非同期取得
+        const fetchPhotosForRecords = () => {
+          records.value.forEach(record => {
+            if (record.birdName) {
+              fetchBirdPhoto(record.birdName);
+            }
+          });
+        };
+
         const loadRecords = async () => {
           try {
             loading.value = true;
             const data = await idb.getAll();
             records.value = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+            // 読み込み完了後に写真取得を開始
+            fetchPhotosForRecords();
           } catch (err) {
             alert("データの取得中にエラーが発生しました:\n" + (err.message || err));
           } finally {
@@ -564,11 +664,7 @@
           return records.value.filter(r => r.isLifer).length;
         });
 
-        // ==========================================
-        // 【アップデート機能 1】鳥ごとの遭遇回数カウント＆ゲーミフィケーション
-        // ==========================================
-
-        // 鳥名ごとの遭遇回数を集計した辞書マップ (大文字小文字/トリム吸収)
+        // 鳥名ごとの遭遇回数を集計した辞書マップ
         const birdCountsMap = computed(() => {
           const map = {};
           records.value.forEach(record => {
@@ -580,7 +676,6 @@
           return map;
         });
 
-        // 特定の鳥名称の遭遇回数を取得
         const getBirdEncounterCount = (birdName) => {
           if (!birdName) return 0;
           return birdCountsMap.value[birdName.trim()] || 0;
@@ -594,7 +689,7 @@
           return { title: 'Rookie', badge: '🌱', color: 'bg-emerald-100 text-emerald-700' };
         };
 
-        // 図鑑ランキングリスト（遭遇数が多い順にソート）
+        // 図鑑ランキングリスト
         const birdPokedex = computed(() => {
           const list = Object.keys(birdCountsMap.value).map(name => {
             const count = birdCountsMap.value[name];
@@ -607,12 +702,9 @@
           return list.sort((a, b) => b.count - a.count);
         });
 
-        // ==========================================
-        // 【アップデート機能 2】Google Maps 連携 URL 生成
-        // ==========================================
+        // Google Maps 連携 URL 生成
         const getGoogleMapsUrl = (locationName) => {
           if (!locationName) return 'https://www.google.com/maps';
-          // 探鳥地の名称をクエリパラメータとして安全にエンコード
           return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName.trim())}`;
         };
 
@@ -696,6 +788,8 @@
             } else {
               await idb.add(recordPayload);
             }
+            // 新しく登録した鳥の写真も即座に取得
+            fetchBirdPhoto(recordPayload.birdName);
             closeModal();
             await loadRecords();
           } catch (err) {
@@ -760,7 +854,10 @@
           editRecord,
           confirmDelete,
           formatDate,
-          formatDateTime
+          formatDateTime,
+          // 新機能エクスポート
+          birdPhotoMap,
+          photoLoadingMap
         };
       }
     }).mount('#app');
