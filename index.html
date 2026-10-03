@@ -7,8 +7,18 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="IntellectNote">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#2563EB">
   <title>IntellectNote - モバイル思考資産メモ</title>
+
+  <!-- PWA / ホーム画面用 鳥アイコン (SVG Data URI) -->
+  <!-- iOS用 Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='110' fill='url(%23grad)'/%3E%3Cpath d='M392 140c-28 14-60 22-92 24 16-18 28-40 32-66-30 18-62 30-98 36-30-32-72-52-118-52-88 0-160 72-160 160 0 12 1 24 4 36C80 274 150 240 220 230c-2 8-4 16-4 24 0 54 36 100 86 118-16 4-32 6-50 6-8 0-16-1-24-2 18 56 70 96 132 98-48 38-110 60-176 60-12 0-22-1-34-2 62 40 136 64 216 64 190 0 310-158 310-310 0-4 0-8-.2-12 28-20 48-46 64-74-26 12-52 20-80 24z' fill='none'/%3E%3Cpath d='M130 370 C 170 360, 240 330, 270 270 C 310 190, 390 150, 420 140 C 370 190, 310 230, 270 240 C 230 250, 180 260, 130 370 Z' fill='%23ffffff'/%3E%3Cpath d='M110 390 C 160 380, 230 340, 270 270 C 250 300, 210 340, 140 375 Z' fill='%23bfdbfe' opacity='0.7'/%3E%3Ccircle cx='385' cy='165' r='10' fill='%232563eb'/%3E%3C/svg%3E">
+  
+  <!-- 一般ブラウザ用 ファビコン -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='110' fill='url(%23grad)'/%3E%3Cpath d='M130 370 C 170 360, 240 330, 270 270 C 310 190, 390 150, 420 140 C 370 190, 310 230, 270 240 C 230 250, 180 260, 130 370 Z' fill='%23ffffff'/%3E%3Cpath d='M110 390 C 160 380, 230 340, 270 270 C 250 300, 210 340, 140 375 Z' fill='%23bfdbfe' opacity='0.7'/%3E%3Ccircle cx='385' cy='165' r='10' fill='%232563eb'/%3E%3C/svg%3E">
+
+  <!-- PWA Web App Manifest (単一ファイル実行可能なData URL方式) -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22IntellectNote%22%2C%22short_name%22%3A%22IntellectNote%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8fafc%22%2C%22theme_color%22%3A%22%232563eb%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%253E%253Cdefs%253E%253ClinearGradient%20id%3D%27grad%27%20x1%3D%270%25%27%20y1%3D%27100%25%27%20x2%3D%27100%25%27%20y2%3D%270%25%27%253E%253Cstop%20offset%3D%270%25%27%20stop-color%3D%27%25232563eb%27%2F%253E%253Cstop%20offset%3D%27100%25%27%20stop-color%3D%27%25236366f1%27%2F%253E%253C%2FlinearGradient%253E%253C%2Fdefs%253E%253Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27110%27%20fill%3D%27url(%2523grad)%27%2F%253E%253Cpath%20d%3D%27M130%20370%20C%20170%20360%2C%20240%20330%2C%20270%20270%20C%20310%20190%2C%20390%20150%2C%20420%20140%20C%20370%20190%2C%20310%20230%2C%20270%20240%20C%20230%20250%2C%20180%20260%2C%20130%20370%20Z%27%20fill%3D%27%2523ffffff%27%2F%253E%253Ccircle%20cx%3D%27385%27%20cy%3D%27165%27%20r%3D%2710%27%20fill%3D%27%25232563eb%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -77,8 +87,9 @@
             :style="{ paddingTop: 'max(0.75rem, var(--sat))' }">
       <div class="px-4 pb-2.5 flex items-center justify-between">
         <div class="flex items-center space-x-2">
+          <!-- アプリ内アイコンも鳥 (Bird) に連動変更 -->
           <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-sm">
-            <i data-lucide="brain" class="w-4 h-4"></i>
+            <i data-lucide="bird" class="w-4 h-4"></i>
           </div>
           <div>
             <h1 class="text-base font-bold tracking-tight text-slate-900 leading-tight">IntellectNote</h1>
@@ -217,7 +228,7 @@
       </div>
     </main>
 
-    <!-- 親指で届くフローティングアクションボタン (FAB) -->
+    <!-- フローティングアクションボタン (FAB) -->
     <div class="fixed right-5 z-20" :style="{ bottom: 'calc(1.25rem + var(--sab))' }">
       <button @click="openCreateModal"
               class="touch-target w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white rounded-full shadow-[0_4px_16px_rgba(37,99,235,0.4)] hover:shadow-lg active:scale-90 flex items-center justify-center transition-all duration-200 focus:outline-none">
@@ -254,7 +265,7 @@
           </button>
         </div>
 
-        <!-- フォーム入力領域（スクロール可能） -->
+        <!-- フォーム入力領域 -->
         <form @submit.prevent="saveNote" class="overflow-y-auto px-5 py-4 space-y-4 flex-1 no-scrollbar select-text">
           
           <!-- フレームワーク形式選択スイッチ -->
@@ -289,7 +300,7 @@
                       class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"></textarea>
           </div>
 
-          <!-- オプション展開トグル（ステップ2・3を後で入力したいユーザー向け） -->
+          <!-- オプション展開トグル -->
           <div class="border-t border-slate-100 pt-3">
             <button type="button" @click="showAdvanced = !showAdvanced"
                     class="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-xs font-medium text-slate-600 flex items-center justify-between transition-colors">
@@ -301,7 +312,7 @@
             </button>
           </div>
 
-          <!-- 任意入力項目（アコーディオン） -->
+          <!-- 任意入力項目 -->
           <div v-show="showAdvanced" class="space-y-4 pt-1">
             <!-- 2. 抽象化 / 解釈 (任意) -->
             <div>
@@ -340,7 +351,7 @@
             </div>
           </div>
 
-          <!-- エラーメッセージ通知 -->
+          <!-- エラーメッセージ -->
           <div v-if="validationError" class="p-2.5 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl flex items-center gap-1.5">
             <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
             <span>{{ validationError }}</span>
@@ -366,7 +377,7 @@
       </div>
     </transition>
 
-    <!-- 削除確認ダイアログ (モバイル専用シート) -->
+    <!-- 削除確認ダイアログ -->
     <div v-if="isDeleteConfirmOpen" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
       <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-xl">
         <div class="text-center space-y-1">
@@ -402,17 +413,17 @@
         const isDeleteConfirmOpen = ref(false);
         const deletingId = ref(null);
         
-        const currentFilter = ref('all'); // 'all', 'fact_only', 'completed'
+        const currentFilter = ref('all');
         const searchQuery = ref('');
         const validationError = ref('');
         const tagInput = ref('');
 
         const formData = ref({
           id: null,
-          type: 'transfer', // 'transfer' または 'forecast'
-          step1: '',        // 事実 (必須)
-          step2: '',        // 抽象/解釈 (任意)
-          step3: '',        // 転用/予測 (任意)
+          type: 'transfer',
+          step1: '',
+          step2: '',
+          step3: '',
           tags: [],
           updatedAt: null
         });
@@ -477,7 +488,7 @@
           });
         };
 
-        // 初期サンプルデータ（初回起動時のみ登録）
+        // 初期サンプルデータ
         const checkInitialData = async () => {
           if (notes.value.length === 0) {
             const initialSamples = [
@@ -520,7 +531,7 @@
             updatedAt: null
           };
           tagInput.value = '';
-          showAdvanced.value = false; // 新規作成時は「事実」に集中させる
+          showAdvanced.value = false;
           isEditing.value = false;
           isModalOpen.value = true;
           renderIcons();
@@ -530,7 +541,6 @@
           validationError.value = '';
           formData.value = { ...note };
           tagInput.value = (note.tags || []).join(', ');
-          // ステップ2または3に入力があればアコーディオンを最初から開いておく
           showAdvanced.value = !!(note.step2 || note.step3 || (note.tags && note.tags.length > 0));
           isEditing.value = true;
           isModalOpen.value = true;
@@ -545,7 +555,6 @@
           closeModal();
         };
 
-        // 保存（必須は step1 の事実のみ）
         const saveNote = async () => {
           if (!formData.value.step1 || !formData.value.step1.trim()) {
             validationError.value = '「事実 (Fact)」の入力は必須です。';
@@ -576,7 +585,6 @@
           }
         };
 
-        // 削除モーダル
         const deleteNote = (id) => {
           deletingId.value = id;
           isDeleteConfirmOpen.value = true;
@@ -594,19 +602,15 @@
           }
         };
 
-        // 事実のみかどうかの判定
         const isFactOnly = (note) => {
           return (!note.step2 || !note.step2.trim()) && (!note.step3 || !note.step3.trim());
         };
 
-        // フィルタリング
         const filteredNotes = computed(() => {
           return notes.value.filter(n => {
-            // 状態フィルター
             if (currentFilter.value === 'fact_only' && !isFactOnly(n)) return false;
             if (currentFilter.value === 'completed' && isFactOnly(n)) return false;
 
-            // 検索フィルター
             const q = searchQuery.value.toLowerCase().trim();
             if (!q) return true;
             return n.step1.toLowerCase().includes(q) ||
