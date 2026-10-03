@@ -1,70 +1,49 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
+  <!-- スマホ表示の最適化: セーフエリア対応とピンチズーム防止 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>ToriLog - 野鳥観察記録ノート</title>
-
-  <!-- PWA / iOS サポート -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="ToriLog">
+  <meta name="apple-mobile-web-app-title" content="IntellectNote">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>IntellectNote - モバイル思考資産メモ</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Vue.js 3 CDN -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-
-  <script>
-    // Web App Manifest を動的生成して追加 (単一ファイルPWA化)
-    const manifestJson = {
-      name: "ToriLog - 野鳥観察ノート",
-      short_name: "ToriLog",
-      start_url: ".",
-      display: "standalone",
-      background_color: "#F2F2F7",
-      theme_color: "#FFFFFF",
-      icons: [
-        {
-          src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕊️</text></svg>",
-          sizes: "192x192 512x512",
-          type: "image/svg+xml"
-        }
-      ]
-    };
-    const stringManifest = JSON.stringify(manifestJson);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blob);
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = manifestURL;
-    document.head.appendChild(link);
-  </script>
 
   <style>
-    /* Apple HIG 準拠スタイル */
+    /* iOS & Android セーフエリア設定 */
     :root {
       --sat: env(safe-area-inset-top, 0px);
       --sab: env(safe-area-inset-bottom, 0px);
       --sal: env(safe-area-inset-left, 0px);
       --sar: env(safe-area-inset-right, 0px);
-      -webkit-font-smoothing: antialiased;
-      -webkit-touch-callout: none;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-      background-color: #F2F2F7;
-      color: #1C1C1E;
-      padding-top: var(--sat);
-      padding-bottom: var(--sab);
-      padding-left: var(--sal);
-      padding-right: var(--sar);
-      touch-action: manipulation;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
     }
 
+    /* iOS 入力時の勝手な拡大ズームを防止 (font-size: 16px以上) */
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+
+    /* タッチターゲット 44px 以上の確保 */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* スクロールバー非表示 */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -73,832 +52,622 @@
       scrollbar-width: none;
     }
 
-    /* 最小タップ領域 (44px x 44px) */
-    .touch-target {
-      min-width: 44px;
-      min-height: 44px;
+    /* ボトムシートのアニメーション */
+    .sheet-enter-active, .sheet-leave-active {
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sheet-enter-from, .sheet-leave-to {
+      transform: translateY(100%);
+      opacity: 0.9;
     }
 
-    .modal-backdrop {
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      background-color: rgba(0, 0, 0, 0.35);
+    .fade-enter-active, .fade-leave-active {
+      transition: opacity 0.2s ease;
+    }
+    .fade-enter-from, .fade-leave-to {
+      opacity: 0;
     }
   </style>
 </head>
-<body class="selection:bg-emerald-100">
-  <div id="app" class="min-h-screen flex flex-col justify-between" v-cloak>
-    
-    <!-- メインコンテナ -->
-    <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-24 flex-grow">
-      
-      <!-- ヘッダーエリア -->
-      <header class="flex items-center justify-between pb-6 border-b border-gray-200/80">
-        <div>
-          <div class="flex items-center space-x-2">
-            <span class="text-3xl">🕊️</span>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">ToriLog</h1>
-          </div>
-          <p class="text-xs sm:text-sm text-gray-500 mt-1">野鳥の出会いを記録し、ライフリストを紡ぐノート</p>
-        </div>
-        <button 
-          @click="openModal()" 
-          class="touch-target bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-medium px-4 py-2.5 rounded-full shadow-sm flex items-center space-x-2 transition duration-200"
-        >
-          <i data-lucide="plus" class="w-5 h-5"></i>
-          <span class="hidden sm:inline text-sm">観察を記録</span>
-        </button>
-      </header>
+<body class="h-full w-full select-none overflow-hidden text-slate-800 antialiased flex flex-col justify-between">
+  <div id="app" class="h-full w-full flex flex-col overflow-hidden relative">
 
-      <!-- 統計 / ハイライトボード -->
-      <section class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-6">
-        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-gray-100">
-          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">総観察回数</span>
-          <div class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ records.length }} <span class="text-xs font-normal text-gray-500">回</span></div>
-        </div>
-        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-gray-100">
-          <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">ライフリスト種数</span>
-          <div class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1">{{ uniqueBirdsCount }} <span class="text-xs font-normal text-gray-500">種</span></div>
-        </div>
-        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-gray-100">
-          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">訪れた探鳥地</span>
-          <div class="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{{ uniqueLocationsCount }} <span class="text-xs font-normal text-gray-500">箇所</span></div>
-        </div>
-        <div class="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-gray-100">
-          <span class="text-xs font-semibold text-amber-500 uppercase tracking-wider">初観測(Lifer)</span>
-          <div class="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">{{ liferCount }} <span class="text-xs font-normal text-gray-500">羽</span></div>
-        </div>
-      </section>
-
-      <!-- ゲーミフィケーション：遭遇図鑑ランキング / 熟練度バッジ -->
-      <section v-if="birdPokedex.length > 0" class="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center space-x-2">
-            <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>
-            <h2 class="text-sm font-bold text-gray-800">鳥別 遭遇図鑑ランク</h2>
+    <!-- 上部ヘッダー（セーフエリア考慮・固定表示） -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 z-20 shrink-0 select-none"
+            :style="{ paddingTop: 'max(0.75rem, var(--sat))' }">
+      <div class="px-4 pb-2.5 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-sm">
+            <i data-lucide="brain" class="w-4 h-4"></i>
           </div>
-          <span class="text-[11px] text-gray-400">出会うほどランクアップ！</span>
-        </div>
-        <div class="flex space-x-3 overflow-x-auto no-scrollbar pb-1">
-          <div 
-            v-for="bird in birdPokedex" 
-            :key="bird.name"
-            class="flex-shrink-0 bg-gray-50 hover:bg-emerald-50/50 transition border border-gray-100 rounded-xl px-3 py-2 flex items-center space-x-2.5"
-          >
-            <!-- 図鑑サムネイル写真 (iNaturalist API連携) -->
-            <div class="w-9 h-9 rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
-              <img 
-                v-if="birdPhotoMap[bird.name]" 
-                :src="birdPhotoMap[bird.name]" 
-                :alt="bird.name"
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <span v-else class="text-base">{{ bird.rank.badge }}</span>
-            </div>
-            <div>
-              <div class="text-xs font-bold text-gray-800 flex items-center space-x-1">
-                <span>{{ bird.name }}</span>
-                <span :class="bird.rank.color" class="text-[10px] px-1.5 py-0.2 rounded font-medium">
-                  {{ bird.rank.title }}
-                </span>
-              </div>
-              <div class="text-[11px] text-gray-500 font-semibold mt-0.5">
-                遭遇: <span class="text-emerald-600 font-bold">{{ bird.count }}</span> 回
-              </div>
-            </div>
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-slate-900 leading-tight">IntellectNote</h1>
+            <p class="text-[10px] text-slate-400 font-medium leading-none">事実から始める思考ストック</p>
           </div>
         </div>
-      </section>
 
-      <!-- 検索・フィルターツールバー -->
-      <section class="mb-6 flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1">
-          <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-          <input 
-            type="text" 
-            v-model="searchQuery" 
-            placeholder="鳥名、探鳥地、同行者、備考で検索..."
-            class="w-full bg-white border border-gray-200 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition"
-          >
-        </div>
-        <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1">
-          <button 
-            @click="filterLiferOnly = !filterLiferOnly" 
-            :class="filterLiferOnly ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white text-gray-600 border-gray-200'"
-            class="touch-target border text-xs px-3.5 py-2 rounded-xl flex items-center space-x-1.5 whitespace-nowrap active:scale-95 transition"
-          >
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
-            <span>初観測のみ</span>
+        <!-- 検索バーの表示切り替えアイコンボタン -->
+        <div class="flex items-center space-x-1">
+          <button @click="showSearch = !showSearch" class="touch-target p-2 rounded-full text-slate-500 hover:bg-slate-100 active:bg-slate-200 flex items-center justify-center transition-colors">
+            <i :data-lucide="showSearch ? 'x' : 'search'" class="w-5 h-5"></i>
           </button>
         </div>
-      </section>
+      </div>
 
-      <!-- 観察記録一覧 (CRUD: Read) -->
-      <section>
-        <div v-if="loading" class="text-center py-16 text-gray-400 text-sm">
-          <div class="animate-spin inline-block w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full mb-2"></div>
-          <div>記録を読み込み中...</div>
+      <!-- スライド展開する検索バー -->
+      <div v-if="showSearch" class="px-4 pb-3">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input v-model="searchQuery" type="text" placeholder="事実やタグを検索..."
+                 class="w-full pl-9 pr-8 py-2 bg-slate-100 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white border border-transparent focus:border-blue-500 transition-all">
+          <button v-if="searchQuery" @click="searchQuery = ''" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+          </button>
         </div>
+      </div>
 
-        <div v-else-if="filteredRecords.length === 0" class="text-center py-20 bg-white/60 rounded-3xl border border-dashed border-gray-300 px-4">
-          <i data-lucide="feather" class="w-12 h-12 mx-auto text-gray-300 mb-3"></i>
-          <p class="text-base font-medium text-gray-600">まだ記録がありません</p>
-          <p class="text-xs text-gray-400 mt-1 max-w-xs mx-auto">「観察を記録」ボタンから、野鳥との出会いを書き留めてみましょう。</p>
+      <!-- モバイル用セグメントコントロール（フィルター） -->
+      <div class="px-4 pb-2">
+        <div class="bg-slate-100/90 p-1 rounded-xl flex items-center text-xs font-semibold">
+          <button @click="currentFilter = 'all'"
+                  :class="currentFilter === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                  class="flex-1 py-1.5 rounded-lg text-center transition-all select-none">
+            すべて ({{ notes.length }})
+          </button>
+          <button @click="currentFilter = 'fact_only'"
+                  :class="currentFilter === 'fact_only' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                  class="flex-1 py-1.5 rounded-lg text-center transition-all select-none flex items-center justify-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+            事実のみ ({{ countFactOnly }})
+          </button>
+          <button @click="currentFilter = 'completed'"
+                  :class="currentFilter === 'completed' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                  class="flex-1 py-1.5 rounded-lg text-center transition-all select-none">
+            思考深化済 ({{ countCompleted }})
+          </button>
         </div>
+      </div>
+    </header>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <article 
-            v-for="item in filteredRecords" 
-            :key="item.id"
-            class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition duration-200 flex flex-col justify-between overflow-hidden"
-          >
-            <div>
-              <div class="flex items-start justify-between">
-                <!-- 鳥名および関連情報 -->
-                <div class="flex-1 pr-2">
-                  <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-                    <h3 class="text-lg font-bold text-gray-900 tracking-tight">{{ item.birdName }}</h3>
-                    <span v-if="item.isLifer" class="bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center space-x-0.5">
-                      <i data-lucide="sparkles" class="w-3 h-3"></i>
-                      <span>Lifer!</span>
-                    </span>
-                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1" :title="'この鳥との累計遭遇回数: ' + getBirdEncounterCount(item.birdName) + '回'">
-                      <i data-lucide="eye" class="w-3 h-3"></i>
-                      <span>{{ getBirdEncounterCount(item.birdName) }}回目</span>
-                    </span>
-                  </div>
-                  <div class="flex items-center space-x-3 text-xs text-gray-500 mt-1.5">
-                    <span class="flex items-center space-x-1">
-                      <i data-lucide="calendar" class="w-3.5 h-3.5 text-gray-400"></i>
-                      <span>{{ formatDate(item.date) }}</span>
-                    </span>
-                    <span v-if="item.companion" class="flex items-center space-x-1">
-                      <i data-lucide="users" class="w-3.5 h-3.5 text-gray-400"></i>
-                      <span>{{ item.companion }}</span>
-                    </span>
-                  </div>
-                </div>
+    <!-- メモ一覧メイン領域 -->
+    <main class="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 no-scrollbar select-text"
+          :style="{ paddingBottom: 'calc(5rem + var(--sab))' }">
+      
+      <!-- メモカード一覧 -->
+      <div v-if="filteredNotes.length > 0" class="space-y-3">
+        <article v-for="note in filteredNotes" :key="note.id"
+                 @click="editNote(note)"
+                 class="bg-white rounded-2xl p-4 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] active:bg-slate-50 transition-colors cursor-pointer relative overflow-hidden">
+          
+          <!-- カード上部バッジ & 日付 -->
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <span :class="note.type === 'transfer' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'"
+                    class="px-2 py-0.5 rounded-md text-[11px] font-semibold border inline-flex items-center gap-1">
+                <i :data-lucide="note.type === 'transfer' ? 'shuffle' : 'trending-up'" class="w-3 h-3"></i>
+                {{ note.type === 'transfer' ? '事実→抽象→転用' : '事実→解釈→予測' }}
+              </span>
+              <span v-if="isFactOnly(note)" class="bg-amber-50 text-amber-600 border border-amber-200 text-[10px] px-1.5 py-0.5 rounded font-medium">
+                事実のみ
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-400 font-normal">{{ formatDate(note.updatedAt) }}</span>
+          </div>
 
-                <!-- 操作ボタングループ (Update / Delete) -->
-                <div class="flex items-center space-x-1 flex-shrink-0">
-                  <button 
-                    @click="editRecord(item)" 
-                    title="編集"
-                    class="touch-target p-2 text-gray-400 hover:text-gray-600 active:scale-90 rounded-lg transition"
-                  >
-                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                  </button>
-                  <button 
-                    @click="confirmDelete(item.id, item.birdName)" 
-                    title="削除"
-                    class="touch-target p-2 text-gray-400 hover:text-rose-500 active:scale-90 rounded-lg transition"
-                  >
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                  </button>
-                </div>
-              </div>
+          <!-- ステップ1: 事実 (必須入力) -->
+          <div class="space-y-1">
+            <div class="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+              事実 (Fact)
+            </div>
+            <p class="text-slate-800 text-sm font-medium leading-relaxed whitespace-pre-wrap line-clamp-3">
+              {{ note.step1 }}
+            </p>
+          </div>
 
-              <!-- iNaturalist API連携による鳥の写真プレビューエリア -->
-              <div class="mt-3 relative rounded-xl overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
-                <img 
-                  v-if="birdPhotoMap[item.birdName]" 
-                  :src="birdPhotoMap[item.birdName]" 
-                  :alt="item.birdName"
-                  class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                  loading="lazy"
-                />
-                <div v-else-if="photoLoadingMap[item.birdName]" class="w-full h-full flex flex-col items-center justify-center text-gray-400 animate-pulse bg-gray-200">
-                  <i data-lucide="image" class="w-8 h-8 opacity-40 mb-1"></i>
-                  <span class="text-[11px]">写真を取得中...</span>
-                </div>
-                <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 border border-gray-100">
-                  <i data-lucide="feather" class="w-8 h-8 opacity-30 mb-1"></i>
-                  <span class="text-[11px] text-gray-400">画像なし</span>
-                </div>
-              </div>
-
-              <!-- 探鳥地：Google Maps 連携リンク -->
-              <div class="mt-3 flex items-center space-x-2">
-                <a 
-                  :href="getGoogleMapsUrl(item.location)" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  title="Googleマップで場所を開く"
-                  class="group flex items-center space-x-1.5 text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-1.5 rounded-lg w-fit transition duration-150 active:scale-95"
-                >
-                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600 group-hover:animate-bounce"></i>
-                  <span class="font-medium underline decoration-emerald-300 underline-offset-2">{{ item.location }}</span>
-                  <i data-lucide="external-link" class="w-3 h-3 text-emerald-500 opacity-70 group-hover:opacity-100"></i>
-                </a>
-              </div>
-
-              <!-- 備考 (尾行) -->
-              <p v-if="item.notes" class="text-xs text-gray-600 mt-3 whitespace-pre-wrap leading-relaxed bg-gray-50/70 p-3 rounded-xl">
-                {{ item.notes }}
-              </p>
+          <!-- ステップ2 & 3（入力がある場合のみ表示、または思考深化の導線） -->
+          <div v-if="note.step2 || note.step3" class="mt-2.5 pt-2.5 border-t border-slate-100 space-y-2">
+            <!-- ステップ2: 抽象 / 解釈 -->
+            <div v-if="note.step2" class="text-xs text-slate-600 bg-slate-50/70 p-2 rounded-xl border border-slate-100">
+              <span class="text-[10px] font-bold text-slate-400 block mb-0.5">
+                {{ note.type === 'transfer' ? '抽象化 (本質)' : '解釈 (背景)' }}
+              </span>
+              <p class="whitespace-pre-wrap line-clamp-2 leading-relaxed">{{ note.step2 }}</p>
             </div>
 
-            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
-              <span>登録: {{ formatDateTime(item.createdAt) }}</span>
+            <!-- ステップ3: 転用 / 予測 -->
+            <div v-if="note.step3" 
+                 :class="note.type === 'transfer' ? 'bg-blue-50/50 border-blue-100 text-blue-900' : 'bg-emerald-50/50 border-emerald-100 text-emerald-900'"
+                 class="text-xs p-2 rounded-xl border">
+              <span class="text-[10px] font-bold block mb-0.5"
+                    :class="note.type === 'transfer' ? 'text-blue-600' : 'text-emerald-600'">
+                ★ {{ note.type === 'transfer' ? 'アクション・転用' : '予測・シナリオ' }}
+              </span>
+              <p class="whitespace-pre-wrap line-clamp-2 font-medium leading-relaxed">{{ note.step3 }}</p>
             </div>
-          </article>
+          </div>
+
+          <!-- 事実のみでまだ思考を広げていない場合の後押しUI -->
+          <div v-else class="mt-3 pt-2.5 border-t border-dashed border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span class="flex items-center gap-1 text-[11px]">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+              タップして抽象化・転用を追記
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+          </div>
+
+          <!-- タグリスト -->
+          <div v-if="note.tags && note.tags.length > 0" class="flex flex-wrap gap-1 mt-2.5">
+            <span v-for="tag in note.tags" :key="tag" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+              #{{ tag }}
+            </span>
+          </div>
+        </article>
+      </div>
+
+      <!-- 空状態表示 -->
+      <div v-else class="py-16 px-4 text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3 shadow-inner">
+          <i data-lucide="pen-tool" class="w-6 h-6"></i>
         </div>
-      </section>
+        <h3 class="text-sm font-bold text-slate-700">メモが見つかりません</h3>
+        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+          右下の「＋」ボタンから、まずは気になった<span class="text-blue-600 font-semibold">事実だけ</span>を気軽に残してみましょう。
+        </p>
+      </div>
     </main>
 
-    <!-- バージョン表示 (更新: v1.0.4) -->
-    <footer class="text-center py-4 text-[10px] text-gray-400 select-none">
-      ToriLog v1.0.4
-    </footer>
+    <!-- 親指で届くフローティングアクションボタン (FAB) -->
+    <div class="fixed right-5 z-20" :style="{ bottom: 'calc(1.25rem + var(--sab))' }">
+      <button @click="openCreateModal"
+              class="touch-target w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-500 text-white rounded-full shadow-[0_4px_16px_rgba(37,99,235,0.4)] hover:shadow-lg active:scale-90 flex items-center justify-center transition-all duration-200 focus:outline-none">
+        <i data-lucide="plus" class="w-7 h-7"></i>
+      </button>
+    </div>
 
-    <!-- 観察登録/編集モーダル -->
-    <div 
-      v-if="isModalOpen" 
-      @click="handleBackdropClick"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
-    >
-      <div 
-        ref="modalContent"
-        class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
-      >
-        <!-- モーダルヘッダー -->
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 class="text-base font-bold text-gray-900">
-            {{ isEditing ? '観察記録を編集' : '新しい観察を記録' }}
-          </h2>
-          <button 
-            @click="closeModal" 
-            class="touch-target p-2 text-gray-400 hover:text-gray-600 rounded-full active:scale-95"
-          >
+    <!-- ボトムシートモーダル (新規作成 / 編集) -->
+    <transition name="fade">
+      <div v-if="isModalOpen" @click="handleBackdropClick" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"></div>
+    </transition>
+
+    <transition name="sheet">
+      <div v-if="isModalOpen"
+           class="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-[28px] shadow-2xl flex flex-col max-h-[92vh] border-t border-slate-100"
+           :style="{ paddingBottom: 'max(1rem, var(--sab))' }"
+           @click.stop>
+        
+        <!-- シート上部ドラッグインジケータバー -->
+        <div class="w-full pt-3 pb-1 flex justify-center cursor-pointer" @click="closeModal">
+          <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+        </div>
+
+        <!-- シートヘッダー -->
+        <div class="px-5 py-2.5 flex items-center justify-between border-b border-slate-100">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">
+              {{ isEditing ? '思考資産の編集' : '新しい事実をメモ' }}
+            </h2>
+            <p class="text-[11px] text-slate-400">必須項目は「事実」だけです</p>
+          </div>
+          <button @click="closeModal" class="touch-target p-1.5 rounded-full text-slate-400 hover:bg-slate-100 text-sm flex items-center justify-center transition-colors">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
 
-        <!-- フォームコンテナ -->
-        <form @submit.prevent="saveRecord" class="px-6 py-4 overflow-y-auto space-y-4 text-sm flex-1">
-          <!-- 【アップデート】鳥名称入力欄（カテゴリ別選択タブ ＆ 誤入力防止機能） -->
+        <!-- フォーム入力領域（スクロール可能） -->
+        <form @submit.prevent="saveNote" class="overflow-y-auto px-5 py-4 space-y-4 flex-1 no-scrollbar select-text">
+          
+          <!-- フレームワーク形式選択スイッチ -->
+          <div>
+            <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              <button type="button" @click="formData.type = 'transfer'"
+                      :class="formData.type === 'transfer' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'"
+                      class="py-2 px-2 rounded-lg text-center transition-all flex items-center justify-center gap-1">
+                <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+                事実→抽象→転用
+              </button>
+              <button type="button" @click="formData.type = 'forecast'"
+                      :class="formData.type === 'forecast' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'"
+                      class="py-2 px-2 rounded-lg text-center transition-all flex items-center justify-center gap-1">
+                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+                事実→解釈→予測
+              </button>
+            </div>
+          </div>
+
+          <!-- 1. 事実 (Fact) ★唯一の必須項目 -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-semibold text-gray-700">
-                鳥名称 <span class="text-rose-500">*</span>
+              <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <span>1. 事実 (Fact)</span>
+                <span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold tracking-tight">必須</span>
               </label>
-              <!-- 既知の遭遇回数ヒント -->
-              <span v-if="form.birdName && getBirdEncounterCount(form.birdName) > 0" class="text-[10px] text-emerald-600 font-medium">
-                通算 {{ getBirdEncounterCount(form.birdName) }} 回の観察実績あり
+              <span class="text-[11px] text-slate-400 font-normal">客観的な出来事・データ</span>
+            </div>
+            <textarea v-model="formData.step1" rows="3" required
+                      placeholder="例: 会議で競合アプリの解約率が30%下がった事例が共有された。"
+                      class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"></textarea>
+          </div>
+
+          <!-- オプション展開トグル（ステップ2・3を後で入力したいユーザー向け） -->
+          <div class="border-t border-slate-100 pt-3">
+            <button type="button" @click="showAdvanced = !showAdvanced"
+                    class="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-xs font-medium text-slate-600 flex items-center justify-between transition-colors">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+                {{ showAdvanced ? '思考の深掘り入力を折りたたむ' : '思考をさらに深掘りする（任意）' }}
               </span>
-            </div>
+              <i :data-lucide="showAdvanced ? 'chevron-up' : 'chevron-down'" class="w-4 h-4 text-slate-400"></i>
+            </button>
+          </div>
 
-            <!-- 初学者向け解説: カテゴリ切り替えタブ。身近な鳥、水辺、山野、過去の記録などから選べるようにします -->
-            <div class="flex space-x-1.5 overflow-x-auto no-scrollbar pb-1 mb-2">
-              <button 
-                type="button"
-                v-for="cat in birdCategoryTabs" 
-                :key="cat.id"
-                @click="selectedBirdTab = cat.id"
-                :class="selectedBirdTab === cat.id ? 'bg-emerald-600 text-white font-medium shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                class="touch-target text-xs px-3 py-1.5 rounded-lg whitespace-nowrap transition duration-150 active:scale-95"
-              >
-                {{ cat.name }}
-              </button>
-            </div>
-
-            <!-- タブに応じた選択肢（チップ一覧）。タップすると入力欄に正確な名前が入るため入力ミスを撲滅できます -->
-            <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-gray-50 border border-gray-200/70 rounded-xl mb-2.5">
-              <button 
-                type="button"
-                v-for="preset in currentTabBirds" 
-                :key="preset"
-                @click="form.birdName = preset"
-                :class="form.birdName === preset ? 'bg-emerald-100 text-emerald-800 border-emerald-400 font-semibold' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'"
-                class="text-xs px-2.5 py-1 rounded-full border transition active:scale-95 text-left"
-              >
-                {{ preset }}
-              </button>
-              <div v-if="currentTabBirds.length === 0" class="text-[11px] text-gray-400 py-1 px-1">
-                選択肢がありません（直接入力してください）
+          <!-- 任意入力項目（アコーディオン） -->
+          <div v-show="showAdvanced" class="space-y-4 pt-1">
+            <!-- 2. 抽象化 / 解釈 (任意) -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-700">
+                  2. {{ formData.type === 'transfer' ? '抽象化 (構造・本質)' : '解釈 (背景・理由)' }}
+                </label>
+                <span class="text-[10px] text-slate-400">任意</span>
               </div>
+              <textarea v-model="formData.step2" rows="2"
+                        :placeholder="formData.type === 'transfer' ? '要するにどういう構造か？なぜ成功/失敗したか？' : 'この背景に何があるのか？何を意味しているのか？'"
+                        class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"></textarea>
             </div>
 
-            <!-- 直接入力用テキストフィールド（自由入力も可能） -->
-            <input 
-              type="text" 
-              v-model.trim="form.birdName" 
-              placeholder="上部のタブから選ぶか、直接入力（例: カワセミ）" 
-              required
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition"
-            >
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- 日付 -->
+            <!-- 3. 転用 / 予測 (任意) -->
             <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-                日付 <span class="text-rose-500">*</span>
-              </label>
-              <input 
-                type="date" 
-                v-model="form.date" 
-                required
-                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition"
-              >
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-bold text-slate-800">
+                  3. {{ formData.type === 'transfer' ? '転用 (自社・生活での実践)' : '予測 (未来のシナリオと対策)' }}
+                </label>
+                <span class="text-[10px] text-slate-400">任意</span>
+              </div>
+              <textarea v-model="formData.step3" rows="2"
+                        :placeholder="formData.type === 'transfer' ? '自分のプロジェクトや業務にどう応用するか？' : '今後何が起こり、どう先回りしておくべきか？'"
+                        class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"></textarea>
             </div>
 
-            <!-- 誰と (同行者) -->
+            <!-- タグ (任意) -->
             <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1.5">誰と (同行者)</label>
-              <input 
-                type="text" 
-                v-model.trim="form.companion" 
-                placeholder="例: 単独, 探鳥クラブの仲間"
-                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition"
-              >
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-700">タグ</label>
+                <span class="text-[10px] text-slate-400">カンマ区切り</span>
+              </div>
+              <input v-model="tagInput" type="text" placeholder="仕事, アイデア, 競合分析"
+                     class="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
             </div>
           </div>
 
-          <!-- 探鳥地 (Google Maps プレビューリンク付き) -->
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-semibold text-gray-700">
-                探鳥地 <span class="text-rose-500">*</span>
-              </label>
-              <a 
-                v-if="form.location" 
-                :href="getGoogleMapsUrl(form.location)" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="text-[10px] text-emerald-600 hover:underline flex items-center space-x-1"
-              >
-                <span>マップで位置を確認</span>
-                <i data-lucide="external-link" class="w-3 h-3"></i>
-              </a>
-            </div>
-            <input 
-              type="text" 
-              v-model.trim="form.location" 
-              placeholder="例: 井の頭恩賜公園 池畔, 富士山麓野鳥の森" 
-              required
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition"
-            >
+          <!-- エラーメッセージ通知 -->
+          <div v-if="validationError" class="p-2.5 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl flex items-center gap-1.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+            <span>{{ validationError }}</span>
           </div>
 
-          <!-- 初観測 (Lifer) フラグ -->
-          <div class="flex items-center space-x-2 pt-1">
-            <input 
-              type="checkbox" 
-              id="liferCheck" 
-              v-model="form.isLifer" 
-              class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
-            >
-            <label for="liferCheck" class="text-xs font-medium text-gray-700 select-none cursor-pointer flex items-center space-x-1">
-              <span>🌟 初観測（自分にとって初めて観察した鳥）</span>
-            </label>
-          </div>
-
-          <!-- 備考 (尾行) -->
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-semibold text-gray-700">備考 (状況・行動・特徴など)</label>
-              <span class="text-[10px] text-gray-400">Shift + Enter で送信</span>
-            </div>
-            <textarea 
-              v-model="form.notes" 
-              rows="3" 
-              @keydown="handleTextareaKeydown"
-              placeholder="例: オスメスペアで水辺の杭に止まっていた。ホバリングしてダイブし小魚を捕食。" 
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition"
-            ></textarea>
-          </div>
-
-          <!-- モーダルアクションフッター -->
-          <div class="pt-3 border-t border-gray-100 flex items-center justify-end space-x-2">
-            <button 
-              type="button" 
-              @click="closeModal" 
-              class="touch-target px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition"
-            >
+          <!-- アクションボタン領域 -->
+          <div class="pt-3 border-t border-slate-100 flex items-center gap-2">
+            <button v-if="isEditing" type="button" @click="deleteNote(formData.id)"
+                    class="touch-target p-3 text-red-500 hover:bg-red-50 rounded-xl font-medium text-xs transition-colors flex items-center justify-center">
+              <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+            <button type="button" @click="closeModal"
+                    class="touch-target flex-1 py-3 px-4 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-semibold text-sm transition-colors text-center">
               キャンセル
             </button>
-            <button 
-              type="submit" 
-              class="touch-target px-5 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl shadow-sm transition"
-            >
-              {{ isEditing ? '保存する' : '登録する' }}
+            <button type="submit"
+                    class="touch-target flex-1 py-3 px-4 rounded-xl text-white bg-blue-600 hover:bg-blue-700 active:scale-95 font-semibold text-sm shadow-md shadow-blue-500/25 transition-all text-center">
+              {{ isEditing ? '更新を保存' : '事実を保存' }}
             </button>
           </div>
         </form>
+
+      </div>
+    </transition>
+
+    <!-- 削除確認ダイアログ (モバイル専用シート) -->
+    <div v-if="isDeleteConfirmOpen" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-2xl p-5 space-y-4 shadow-xl">
+        <div class="text-center space-y-1">
+          <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full mx-auto flex items-center justify-center mb-2">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+          </div>
+          <h4 class="font-bold text-base text-slate-800">このメモを削除しますか？</h4>
+          <p class="text-xs text-slate-500">削除したデータは復元できません。</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button @click="isDeleteConfirmOpen = false" class="py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold touch-target">
+            やめる
+          </button>
+          <button @click="executeDelete" class="py-2.5 rounded-xl bg-red-600 text-white text-xs font-semibold touch-target">
+            削除する
+          </button>
+        </div>
       </div>
     </div>
 
   </div>
 
   <script>
-    // ==========================================
-    // 1. IndexedDB 永続化レイヤー (既存データ構造は完全維持)
-    // ==========================================
-    const DB_NAME = 'ToriLog_BirdDatabase';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'bird_records';
-
-    function initDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            store.createIndex('birdName', 'birdName', { unique: false });
-            store.createIndex('date', 'date', { unique: false });
-          }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => {
-          const err = "IndexedDBの初期化に失敗しました。";
-          alert(err + "\nブラウザ設定でストレージ利用を許可してください。");
-          reject(err);
-        };
-      });
-    }
-
-    const idb = {
-      async getAll() {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction([STORE_NAME], 'readonly');
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.getAll();
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      },
-      async add(record) {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction([STORE_NAME], 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.add(record);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      },
-      async update(record) {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction([STORE_NAME], 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.put(record);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      },
-      async delete(id) {
-        const db = await initDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction([STORE_NAME], 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-          const req = store.delete(id);
-          req.onsuccess = () => resolve(req.result);
-          req.onerror = () => reject(req.error);
-        });
-      }
-    };
-
-    // ==========================================
-    // 2. Vue.js 3 アプリケーション本体
-    // ==========================================
-    const { createApp, ref, computed, onMounted, nextTick, reactive } = Vue;
+    const { createApp, ref, computed, onMounted, nextTick } = Vue;
 
     createApp({
       setup() {
-        const records = ref([]);
-        const loading = ref(true);
-        const searchQuery = ref('');
-        const filterLiferOnly = ref(false);
+        const notes = ref([]);
         const isModalOpen = ref(false);
         const isEditing = ref(false);
-        const modalContent = ref(null);
+        const showSearch = ref(false);
+        const showAdvanced = ref(false);
+        const isDeleteConfirmOpen = ref(false);
+        const deletingId = ref(null);
+        
+        const currentFilter = ref('all'); // 'all', 'fact_only', 'completed'
+        const searchQuery = ref('');
+        const validationError = ref('');
+        const tagInput = ref('');
 
-        // 鳥画像キャッシュと読み込み状態
-        const birdPhotoMap = reactive({});
-        const photoLoadingMap = reactive({});
-
-        // 【新機能】鳥の名前選択肢タブ（入力ミス防止）
-        const selectedBirdTab = ref('common');
-        const birdCategoryTabs = [
-          { id: 'common', name: '身近な鳥' },
-          { id: 'water', name: '水辺・湿地' },
-          { id: 'mountain', name: '山野・森林' },
-          { id: 'history', name: '過去の記録から' }
-        ];
-
-        // 初学者向け解説: 代表的な野鳥プリセットリスト（正確な標準和名でAPI照合率を向上）
-        const birdPresets = {
-          common: ['スズメ', 'ツバメ', 'ハクセキレイ', 'ヒヨドリ', 'ムクドリ', 'キジバト', 'ハシブトガラス', 'ハシボソガラス', 'カワラヒワ', 'メジロ', 'シジュウカラ', 'ジョウビタキ'],
-          water: ['カワセミ', 'アオサギ', 'ダイサギ', 'コサギ', 'カルガモ', 'マガモ', 'オオバン', 'カイツブリ', 'ユリカモメ', 'セグロセキレイ', 'イソシギ'],
-          mountain: ['ルリビタキ', 'キビタキ', 'オオルリ', 'ヤマガラ', 'エナガ', 'コゲラ', 'アオゲラ', 'ウグイス', 'モズ', 'トビ', 'ノスリ', 'フクロウ']
-        };
-
-        // 選択されたタブに応じた選択肢一覧を返す算出プロパティ
-        const currentTabBirds = computed(() => {
-          if (selectedBirdTab.value === 'history') {
-            // これまでに記録した鳥の名前から重複を除外して五十音順に提示
-            const historyNames = Array.from(new Set(records.value.map(r => (r.birdName || '').trim()).filter(Boolean)));
-            return historyNames.sort((a, b) => a.localeCompare(b, 'ja'));
-          }
-          return birdPresets[selectedBirdTab.value] || [];
-        });
-
-        // 入力フォームデータ構造
-        const form = ref({
+        const formData = ref({
           id: null,
-          birdName: '',
-          date: new Date().toISOString().split('T')[0],
-          companion: '',
-          location: '',
-          notes: '',
-          isLifer: false,
-          createdAt: null
+          type: 'transfer', // 'transfer' または 'forecast'
+          step1: '',        // 事実 (必須)
+          step2: '',        // 抽象/解釈 (任意)
+          step3: '',        // 転用/予測 (任意)
+          tags: [],
+          updatedAt: null
         });
 
-        const refreshIcons = () => {
-          nextTick(() => {
-            if (window.lucide) {
-              window.lucide.createIcons();
-            }
-          });
-        };
+        // IndexedDB 設定
+        const DB_NAME = 'IntellectMobileDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'notes';
+        let db = null;
 
-        // iNaturalist API連携 (鳥の写真を取得)
-        const fetchBirdPhoto = async (birdName) => {
-          const name = (birdName || '').trim();
-          if (!name) return;
-
-          if (birdPhotoMap[name] !== undefined || photoLoadingMap[name]) return;
-
-          photoLoadingMap[name] = true;
-
-          try {
-            const baseUrl = "https://api.inaturalist.org/v1/observations?iconic_taxa=Aves&photos=true&per_page=10";
-            const url = `${baseUrl}&q=${encodeURIComponent(name)}`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`HTTPエラー ステータス: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data && data.results && data.results.length > 0) {
-              let photoUrl = null;
-              for (const obs of data.results) {
-                if (obs.photos && obs.photos.length > 0) {
-                  photoUrl = obs.photos[0].url.replace('square', 'medium');
-                  break;
-                }
+        const openDB = () => {
+          return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+              const database = e.target.result;
+              if (!database.objectStoreNames.contains(STORE_NAME)) {
+                database.createObjectStore(STORE_NAME, { keyPath: 'id' });
               }
-              birdPhotoMap[name] = photoUrl;
-            } else {
-              birdPhotoMap[name] = null;
-            }
-          } catch (err) {
-            console.error("iNaturalist API連携エラー:", err);
-            birdPhotoMap[name] = null;
-            alert(`【画像取得エラー】「${name}」の写真取得中に通信エラーが発生しました。\nネットワーク接続を確認してください。\n詳細: ${err.message || err}`);
-          } finally {
-            photoLoadingMap[name] = false;
-            refreshIcons();
-          }
-        };
-
-        const fetchPhotosForRecords = () => {
-          records.value.forEach(record => {
-            if (record.birdName) {
-              fetchBirdPhoto(record.birdName);
-            }
-          });
-        };
-
-        const loadRecords = async () => {
-          try {
-            loading.value = true;
-            const data = await idb.getAll();
-            records.value = data.sort((a, b) => new Date(b.date) - new Date(a.date));
-            fetchPhotosForRecords();
-          } catch (err) {
-            alert("データの取得中にエラーが発生しました:\n" + (err.message || err));
-          } finally {
-            loading.value = false;
-            refreshIcons();
-          }
-        };
-
-        // 統計情報の算出プロパティ
-        const uniqueBirdsCount = computed(() => {
-          const names = records.value.map(r => r.birdName.trim().toLowerCase()).filter(Boolean);
-          return new Set(names).size;
-        });
-
-        const uniqueLocationsCount = computed(() => {
-          const locs = records.value.map(r => r.location.trim().toLowerCase()).filter(Boolean);
-          return new Set(locs).size;
-        });
-
-        const liferCount = computed(() => {
-          return records.value.filter(r => r.isLifer).length;
-        });
-
-        // 鳥名ごとの遭遇回数を集計した辞書マップ
-        const birdCountsMap = computed(() => {
-          const map = {};
-          records.value.forEach(record => {
-            const name = (record.birdName || '').trim();
-            if (name) {
-              map[name] = (map[name] || 0) + 1;
-            }
-          });
-          return map;
-        });
-
-        const getBirdEncounterCount = (birdName) => {
-          if (!birdName) return 0;
-          return birdCountsMap.value[birdName.trim()] || 0;
-        };
-
-        const getBirdRank = (count) => {
-          if (count >= 10) return { title: 'Master', badge: '👑', color: 'bg-purple-100 text-purple-700' };
-          if (count >= 5) return { title: 'Expert', badge: '🎖️', color: 'bg-amber-100 text-amber-700' };
-          if (count >= 3) return { title: 'Regular', badge: '🥉', color: 'bg-blue-100 text-blue-700' };
-          return { title: 'Rookie', badge: '🌱', color: 'bg-emerald-100 text-emerald-700' };
-        };
-
-        const birdPokedex = computed(() => {
-          const list = Object.keys(birdCountsMap.value).map(name => {
-            const count = birdCountsMap.value[name];
-            return {
-              name,
-              count,
-              rank: getBirdRank(count)
             };
+            request.onsuccess = (e) => {
+              db = e.target.result;
+              resolve(db);
+            };
+            request.onerror = (e) => reject(e);
           });
-          return list.sort((a, b) => b.count - a.count);
-        });
-
-        const getGoogleMapsUrl = (locationName) => {
-          if (!locationName) return 'https://www.google.com/maps';
-          return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationName.trim())}`;
         };
 
-        // 検索・フィルタリング処理
-        const filteredRecords = computed(() => {
-          const q = searchQuery.value.trim().toLowerCase();
-          return records.value.filter(item => {
-            if (filterLiferOnly.value && !item.isLifer) return false;
-            if (!q) return true;
-            return (
-              (item.birdName && item.birdName.toLowerCase().includes(q)) ||
-              (item.location && item.location.toLowerCase().includes(q)) ||
-              (item.companion && item.companion.toLowerCase().includes(q)) ||
-              (item.notes && item.notes.toLowerCase().includes(q))
-            );
-          });
-        });
-
-        // モーダル制御
-        const openModal = (item = null) => {
-          if (item) {
-            isEditing.value = true;
-            form.value = { ...item };
-          } else {
-            isEditing.value = false;
-            form.value = {
-              id: null,
-              birdName: '',
-              date: new Date().toISOString().split('T')[0],
-              companion: '',
-              location: '',
-              notes: '',
-              isLifer: false,
-              createdAt: new Date().toISOString()
+        const loadNotes = async () => {
+          if (!db) await openDB();
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction([STORE_NAME], 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.getAll();
+            req.onsuccess = () => {
+              const res = req.result || [];
+              notes.value = res.sort((a, b) => b.updatedAt - a.updatedAt);
+              resolve();
             };
+            req.onerror = (e) => reject(e);
+          });
+        };
+
+        const saveToDB = async (item) => {
+          if (!db) await openDB();
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction([STORE_NAME], 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(JSON.parse(JSON.stringify(item)));
+            req.onsuccess = () => resolve();
+            req.onerror = (e) => reject(e);
+          });
+        };
+
+        const removeFromDB = async (id) => {
+          if (!db) await openDB();
+          return new Promise((resolve, reject) => {
+            const tx = db.transaction([STORE_NAME], 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.delete(id);
+            req.onsuccess = () => resolve();
+            req.onerror = (e) => reject(e);
+          });
+        };
+
+        // 初期サンプルデータ（初回起動時のみ登録）
+        const checkInitialData = async () => {
+          if (notes.value.length === 0) {
+            const initialSamples = [
+              {
+                id: 'sample-1',
+                type: 'transfer',
+                step1: '海外の主要SNSで、縦型ショート動画の投稿数が前年同期比で1.8倍に増加していた。',
+                step2: 'ユーザーは「まとまった時間の消費」よりも「隙間時間の即時的な刺激」を優先している。',
+                step3: '自社のBtoB広報でも、長文ブログだけでなく30秒の要約縦型クリップをテスト投稿してみる。',
+                tags: ['SNS', 'マーケティング', 'ショート動画'],
+                updatedAt: Date.now() - 1000 * 60 * 60 * 2
+              },
+              {
+                id: 'sample-2',
+                type: 'forecast',
+                step1: '生成AIツールの社内利用率が、この3ヶ月で20%から65%まで急増した。',
+                step2: '',
+                step3: '',
+                tags: ['AI', '業務効率'],
+                updatedAt: Date.now() - 1000 * 60 * 60 * 24
+              }
+            ];
+            for (const item of initialSamples) {
+              await saveToDB(item);
+            }
+            await loadNotes();
           }
-          // モーダルを開くたびに初期タブを「身近な鳥」に設定
-          selectedBirdTab.value = 'common';
+        };
+
+        // モーダル操作
+        const openCreateModal = () => {
+          validationError.value = '';
+          formData.value = {
+            id: null,
+            type: 'transfer',
+            step1: '',
+            step2: '',
+            step3: '',
+            tags: [],
+            updatedAt: null
+          };
+          tagInput.value = '';
+          showAdvanced.value = false; // 新規作成時は「事実」に集中させる
+          isEditing.value = false;
           isModalOpen.value = true;
-          refreshIcons();
+          renderIcons();
+        };
+
+        const editNote = (note) => {
+          validationError.value = '';
+          formData.value = { ...note };
+          tagInput.value = (note.tags || []).join(', ');
+          // ステップ2または3に入力があればアコーディオンを最初から開いておく
+          showAdvanced.value = !!(note.step2 || note.step3 || (note.tags && note.tags.length > 0));
+          isEditing.value = true;
+          isModalOpen.value = true;
+          renderIcons();
         };
 
         const closeModal = () => {
           isModalOpen.value = false;
         };
 
-        const handleBackdropClick = (e) => {
-          if (modalContent.value && !modalContent.value.contains(e.target)) {
-            closeModal();
-          }
+        const handleBackdropClick = () => {
+          closeModal();
         };
 
-        const handleTextareaKeydown = (e) => {
-          if (e.key === 'Enter' && e.shiftKey) {
-            e.preventDefault();
-            saveRecord();
-          }
-        };
-
-        // 保存処理 (Create / Update)
-        const saveRecord = async () => {
-          if (!form.value.birdName || !form.value.date || !form.value.location) {
-            alert("入力エラー:\n鳥名称、日付、探鳥地は必須項目です。");
+        // 保存（必須は step1 の事実のみ）
+        const saveNote = async () => {
+          if (!formData.value.step1 || !formData.value.step1.trim()) {
+            validationError.value = '「事実 (Fact)」の入力は必須です。';
             return;
           }
 
-          const recordPayload = {
-            birdName: form.value.birdName,
-            date: form.value.date,
-            companion: form.value.companion,
-            location: form.value.location,
-            notes: form.value.notes,
-            isLifer: !!form.value.isLifer,
-            createdAt: form.value.createdAt || new Date().toISOString()
+          const parsedTags = tagInput.value
+            ? tagInput.value.split(',').map(t => t.trim()).filter(t => t.length > 0)
+            : [];
+
+          const item = {
+            id: isEditing.value ? formData.value.id : Date.now().toString(),
+            type: formData.value.type,
+            step1: formData.value.step1.trim(),
+            step2: (formData.value.step2 || '').trim(),
+            step3: (formData.value.step3 || '').trim(),
+            tags: parsedTags,
+            updatedAt: Date.now()
           };
 
           try {
-            if (isEditing.value && form.value.id) {
-              recordPayload.id = form.value.id;
-              await idb.update(recordPayload);
-            } else {
-              await idb.add(recordPayload);
-            }
-            fetchBirdPhoto(recordPayload.birdName);
+            await saveToDB(item);
+            await loadNotes();
             closeModal();
-            await loadRecords();
-          } catch (err) {
-            alert("データ保存に失敗しました:\n" + (err.message || err));
+            renderIcons();
+          } catch (e) {
+            validationError.value = '保存に失敗しました。';
           }
         };
 
-        const editRecord = (item) => {
-          openModal(item);
+        // 削除モーダル
+        const deleteNote = (id) => {
+          deletingId.value = id;
+          isDeleteConfirmOpen.value = true;
+          renderIcons();
         };
 
-        const confirmDelete = async (id, birdName) => {
-          const ok = confirm(`「${birdName}」の観察記録を削除してもよろしいですか？\nこの操作は取り消せません。`);
-          if (!ok) return;
-
-          try {
-            await idb.delete(id);
-            await loadRecords();
-          } catch (err) {
-            alert("削除処理中にエラーが発生しました:\n" + (err.message || err));
+        const executeDelete = async () => {
+          if (deletingId.value) {
+            await removeFromDB(deletingId.value);
+            await loadNotes();
+            isDeleteConfirmOpen.value = false;
+            isModalOpen.value = false;
+            deletingId.value = null;
+            renderIcons();
           }
         };
 
-        const formatDate = (dateStr) => {
-          if (!dateStr) return '';
-          const d = new Date(dateStr);
-          return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+        // 事実のみかどうかの判定
+        const isFactOnly = (note) => {
+          return (!note.step2 || !note.step2.trim()) && (!note.step3 || !note.step3.trim());
         };
 
-        const formatDateTime = (isoStr) => {
-          if (!isoStr) return '';
-          const d = new Date(isoStr);
-          return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        // フィルタリング
+        const filteredNotes = computed(() => {
+          return notes.value.filter(n => {
+            // 状態フィルター
+            if (currentFilter.value === 'fact_only' && !isFactOnly(n)) return false;
+            if (currentFilter.value === 'completed' && isFactOnly(n)) return false;
+
+            // 検索フィルター
+            const q = searchQuery.value.toLowerCase().trim();
+            if (!q) return true;
+            return n.step1.toLowerCase().includes(q) ||
+                   (n.step2 && n.step2.toLowerCase().includes(q)) ||
+                   (n.step3 && n.step3.toLowerCase().includes(q)) ||
+                   (n.tags && n.tags.some(t => t.toLowerCase().includes(q)));
+          });
+        });
+
+        const countFactOnly = computed(() => notes.value.filter(isFactOnly).length);
+        const countCompleted = computed(() => notes.value.filter(n => !isFactOnly(n)).length);
+
+        const formatDate = (timestamp) => {
+          if (!timestamp) return '';
+          const d = new Date(timestamp);
+          const month = d.getMonth() + 1;
+          const day = d.getDate();
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          return `${month}/${day} ${hours}:${minutes}`;
         };
 
-        onMounted(() => {
-          loadRecords();
+        const renderIcons = () => {
+          nextTick(() => {
+            if (window.lucide) {
+              lucide.createIcons();
+            }
+          });
+        };
+
+        onMounted(async () => {
+          await openDB();
+          await loadNotes();
+          await checkInitialData();
+          renderIcons();
         });
 
         return {
-          records,
-          loading,
-          searchQuery,
-          filterLiferOnly,
+          notes,
           isModalOpen,
           isEditing,
-          modalContent,
-          form,
-          uniqueBirdsCount,
-          uniqueLocationsCount,
-          liferCount,
-          birdPokedex,
-          getBirdEncounterCount,
-          getGoogleMapsUrl,
-          filteredRecords,
-          openModal,
+          showSearch,
+          showAdvanced,
+          isDeleteConfirmOpen,
+          currentFilter,
+          searchQuery,
+          validationError,
+          tagInput,
+          formData,
+          filteredNotes,
+          countFactOnly,
+          countCompleted,
+          isFactOnly,
+          openCreateModal,
+          editNote,
           closeModal,
           handleBackdropClick,
-          handleTextareaKeydown,
-          saveRecord,
-          editRecord,
-          confirmDelete,
-          formatDate,
-          formatDateTime,
-          birdPhotoMap,
-          photoLoadingMap,
-          // アップデート要素のエクスポート
-          selectedBirdTab,
-          birdCategoryTabs,
-          currentTabBirds
+          saveNote,
+          deleteNote,
+          executeDelete,
+          formatDate
         };
       }
     }).mount('#app');
